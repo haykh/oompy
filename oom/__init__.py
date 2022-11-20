@@ -310,25 +310,21 @@ class Quantity:
 class UnitsClass:
     def __init__(self) -> None:
         allunits = [[p + u for p in [''] + list(Powers.keys())] for u in list(BaseUnits.values()) + list(UnitEquivalencies.keys()) if u != '']
-        self.__units = {u: Quantity(u) for u in sum(allunits, [])}
+        self.units = {u: Quantity(u) for u in sum(allunits, [])}
     def __getattribute__(self, name):
-        if name == "__units":
-            return super().__getattribute__(name)
-        elif name == "all":
+        if name == "all":
             return list(BaseUnits.values()) + list(UnitEquivalencies.keys())
         else:
-            return self.__units[name]
+            return super().__getattribute__("units")[name]
 
 class ConstantsClass:
     def __init__(self) -> None:
-        self.__constants = {k: Quantity(*v) for k, v in ConstantValues.items()}
+        self.constants = {k: Quantity(*v) for k, v in ConstantValues.items()}
     def __getattribute__(self, name):
-        if name == "__constants":
-            return super().__getattribute__(name)
-        elif name == "all":
+        if name == "all":
             return {k: Quantity(*v).cgs for k, v in ConstantValues.items()}
         else:
-            return self.__constants[name]
+            return super().__getattribute__("constants")[name]
         
 
 Units = UnitsClass()
