@@ -5,7 +5,7 @@ OOM is a python package for working with physical units and quantities. Unlike `
 ## Installation
 
 ```sh
-pip install git+...
+pip install git+https://github.com/haykh/oom.git@master
 ```
 
 ## Usage
