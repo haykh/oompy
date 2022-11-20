@@ -1,9 +1,11 @@
 from enum import Enum
 from fractions import Fraction
-from typing import Union
+from typing import Union, Dict, Tuple
+
 
 def addOrAppend(dct, ky, vl): return dct.update(
-        {ky: vl}) if ky not in dct.keys() else dct.update({ky: dct[ky] + vl})
+    {ky: vl}) if ky not in dct.keys() else dct.update({ky: dct[ky] + vl})
+
 
 Powers = {
     "p": 1e-12,
@@ -34,6 +36,7 @@ class Type(Enum):
     ACCELERATION = 9
     INFORMATION = 10
     TEMPERATURE = 11
+
 
 CGSUnits = {
     Type.DIMENSIONLESS: "",
@@ -115,7 +118,7 @@ ConstantValues = {
 }
 
 
-def StripCoeff(unit_str: str) -> tuple[float, str]:
+def StripCoeff(unit_str: str) -> Tuple[float, str]:
     coeff = 1.0
     if len(unit_str.split(' ')) > 1:
         try:
@@ -129,15 +132,18 @@ def StripCoeff(unit_str: str) -> tuple[float, str]:
 def ParseFraction(frac: str) -> 'Fraction':
     return Fraction(Fraction(frac.split('/')[0]), Fraction(frac.split('/')[1]) if len(frac.split('/')) > 1 else None)
 
-def ParseUnit(unit_str: str) -> tuple[float, dict[str, 'Fraction']]:
+
+def ParseUnit(unit_str: str) -> Tuple[float, Dict[str, 'Fraction']]:
     coeff, unit_str = StripCoeff(unit_str)
-    unit_dict = {}
+    unit_dict = {}  # type: dict[str, Fraction]
     for u in unit_str.split(' '):
-        pwr = (ParseFraction(u.split('^')[1]) if len(u.split('^')) > 1 else Fraction(1, 1))
+        pwr = (ParseFraction(u.split('^')[1]) if len(
+            u.split('^')) > 1 else Fraction(1, 1))
         addOrAppend(unit_dict, u.split('^')[0], pwr)
     return coeff, unit_dict
 
-def Stringize(fct: any) -> str:
+
+def Stringize(fct: Union[Dict, Tuple]) -> str:
     if isinstance(fct, dict):
         return " ".join([f"{u}^{p}" if p != 1 else f"{u}" for u, p in fct.items() if p != 0])
     elif isinstance(fct, tuple):
@@ -157,7 +163,7 @@ def JoinUnits(unit: str) -> str:
 
 def ReduceUnitToBase(unit: str = "") -> str:
     coeff, factorized = ParseUnit(unit)
-    newunits = {}
+    newunits = {}  # type: dict[str, Fraction]
     for u, p in factorized.items():
         if u in BaseUnits.values():
             addOrAppend(newunits, u, p)
@@ -185,8 +191,8 @@ def ReduceUnitToBase(unit: str = "") -> str:
     return Stringize((coeff, newunits))
 
 
-def GetBaseType(unit: str = "") -> dict['Type', 'Fraction']:
-    coeff, factorized = ParseUnit(ReduceUnitToBase(unit))
+def GetBaseType(unit: str = "") -> Dict['Type', 'Fraction']:
+    _, factorized = ParseUnit(ReduceUnitToBase(unit))
     newf = {}
     for f in factorized.keys():
         for k, v in BaseUnits.items():
@@ -196,14 +202,16 @@ def GetBaseType(unit: str = "") -> dict['Type', 'Fraction']:
     assert len(newf) == len(factorized), "Wrong base type inferrence"
     return newf
 
-def RaiseUnitsToPower(unit, pwr):
+
+def RaiseUnitsToPower(unit: str, pwr: Union[int, float, Fraction]) -> str:
     pwr = Fraction(pwr).limit_denominator(1000000)
     c, u = ParseUnit(unit)
     return Stringize((c**pwr, Stringize({b: Fraction(Fraction(pwr) * p) for b, p in u.items()})))
 
-def ConvertUnit(src: str, dst: str) -> tuple[float, str]:
+
+def ConvertUnit(src: str, dst: str) -> Tuple[float, str]:
     assert GetBaseType(src) == GetBaseType(dst), \
-            "Cannot convert between different base types"
+        "Cannot convert between different base types"
     _, dst_u = StripCoeff(dst)
     red_src = ReduceUnitToBase(src)
     red_dst = ReduceUnitToBase(dst)
@@ -218,8 +226,8 @@ ValidQuantity = Union['Quantity', tuple, int, float]
 class Quantity:
     def __init__(self, *args) -> None:
         if (len(args) == 1) and isinstance(args[0], Quantity):
-            self.value = args[0].value
-            self.unit = args[0].unit
+            self.value = args[0].value  # type: float
+            self.unit = args[0].unit  # type: str
         elif (len(args) == 1) and isinstance(args[0], str):
             self.value, self.unit = StripCoeff(args[0])
         elif (len(args) == 1) and isinstance(args[0], (int, float)):
@@ -237,7 +245,7 @@ class Quantity:
     def __str__(self) -> str:
         return self.__repr__()
 
-    def to(self, unit: (str or 'Quantity') = None) -> 'Quantity':
+    def to(self, unit: Union[str, 'Quantity', None] = None) -> 'Quantity':
         if unit is None:
             return self.cgs
         elif self.unit == unit:
@@ -274,7 +282,7 @@ class Quantity:
         return Quantity(-self.value, self.unit)
 
     def __sub__(self, other: ValidQuantity) -> 'Quantity':
-        return self + (-other)
+        return self + (-Quantity(other))
 
     def __rsub__(self, other: ValidQuantity) -> 'Quantity':
         return (-self) + other
@@ -302,30 +310,35 @@ class Quantity:
             return Quantity(self.value**other, RaiseUnitsToPower(self.unit, other))
 
     def __truediv__(self, other: ValidQuantity) -> 'Quantity':
-        return self * (other**(-1))
+        return self * (Quantity(other)**(-1))
 
     def __rtruediv__(self, other: ValidQuantity) -> 'Quantity':
         return (self**(-1)) * other
 
+
 class UnitsClass:
     def __init__(self) -> None:
-        allunits = [[p + u for p in [''] + list(Powers.keys())] for u in list(BaseUnits.values()) + list(UnitEquivalencies.keys()) if u != '']
+        allunits = [[p + u for p in [''] + list(Powers.keys())] for u in list(
+            BaseUnits.values()) + list(UnitEquivalencies.keys()) if u != '']
         self.units = {u: Quantity(u) for u in sum(allunits, [])}
+
     def __getattribute__(self, name):
         if name == "all":
             return list(BaseUnits.values()) + list(UnitEquivalencies.keys())
         else:
             return super().__getattribute__("units")[name]
 
+
 class ConstantsClass:
     def __init__(self) -> None:
         self.constants = {k: Quantity(*v) for k, v in ConstantValues.items()}
+
     def __getattribute__(self, name):
         if name == "all":
             return {k: Quantity(*v).cgs for k, v in ConstantValues.items()}
         else:
             return super().__getattribute__("constants")[name]
-        
+
 
 Units = UnitsClass()
 Constants = ConstantsClass()
