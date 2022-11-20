@@ -2,6 +2,8 @@ from enum import Enum
 from fractions import Fraction
 from typing import Union, Dict, Tuple
 
+def get_version() -> str:
+    return "1.1.0"
 
 def addOrAppend(dct, ky, vl): return dct.update(
     {ky: vl}) if ky not in dct.keys() else dct.update({ky: dct[ky] + vl})
@@ -245,28 +247,68 @@ class Quantity:
     def __str__(self) -> str:
         return self.__repr__()
 
-    def to(self, unit: Union[str, 'Quantity', None] = None) -> 'Quantity':
-        if unit is None:
-            return self.cgs
-        elif self.unit == unit:
-            return self
-        elif isinstance(unit, Quantity):
-            return self.to(unit.unit)
-        elif isinstance(unit, str):
-            return Quantity(*ConvertUnit(Stringize((self.value, self.unit)), unit))
-        else:
-            raise Exception("Invalid unit")
-
     @property
     def cgs(self) -> 'Quantity':
-        return self.to(Stringize({CGSUnits[b]: p for b, p in GetBaseType(self.unit).items()}))
+        return self >> Stringize({CGSUnits[b]: p for b, p in GetBaseType(self.unit).items()})
+
+    def __invert__(self) -> Dict['Type', 'Fraction']:
+        return GetBaseType(self.unit)
+
+    def __eq__(self, other) -> bool:
+        if isinstance(other, Quantity):
+            return (self.__invert__() == ~other) and (self.cgs.value == other.cgs.value)
+        elif isinstance(other, tuple):
+            return self.value == Quantity(*other)
+        elif isinstance(other, (int, float)):
+            return (self.value == other) and (self.unit == "")
+        else:
+            raise Exception("Invalid type for Quantity.__eq__")
+    
+    def __ne__(self, other) -> bool:
+        return not self.__eq__(other)
+    
+    def __lt__(self, other) -> bool:
+        if isinstance(other, Quantity):
+            if ~other != self.__invert__():
+                raise Exception("Cannot compare different base types")
+            return self.cgs.value < other.cgs.value
+        elif isinstance(other, tuple):
+            return self < Quantity(*other)
+        elif isinstance(other, (int, float)):
+            if self.unit != "":
+                raise Exception("Cannot compare different base types")
+            return self.cgs.value < other
+        else:
+            raise Exception("Invalid type for Quantity.__lt__")
+        
+    def __le__(self, other) -> bool:
+        return self.__lt__(other) or self.__eq__(other)
+
+    def __gt__(self, other) -> bool:
+        return not self.__le__(other)
+    
+    def __ge__(self, other) -> bool:
+        return not self.__lt__(other)
+
+    def __rshift__(self, unit: Union[str, 'Quantity']) -> 'Quantity':
+        if self.unit == unit:
+            return self
+        elif isinstance(unit, Quantity):
+            return self >> unit.unit
+        elif isinstance(unit, str):
+            if unit == "":
+                return self.cgs
+            else:
+                return Quantity(*ConvertUnit(Stringize((self.value, self.unit)), unit))
+        else:
+            raise Exception("Invalid unit")
 
     def __add__(self, other: ValidQuantity) -> 'Quantity':
         if isinstance(other, Quantity):
             if self.unit == other.unit:
                 return Quantity(self.value + other.value, self.unit)
             else:
-                return self + other.to(self.unit)
+                return self + (other >> self.unit)
         elif isinstance(other, tuple):
             return self + Quantity(*other)
         elif isinstance(other, (int, float)):
