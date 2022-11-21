@@ -90,6 +90,8 @@ print ((elephant_speed * my_speed / rabbit_speed) >> elephant_speed)
 #                                         infer unit from another quantity
 ```
 
+See demo [on replit.com](https://replit.com/@haykh1/oom-demo?v=1). 
+
 ## To do
 
 - [x] (added in v1.1.0) comparison of quantities (`==`, `!=`, `>`, `<`, `>=`, `<=`)
