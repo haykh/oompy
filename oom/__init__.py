@@ -296,10 +296,7 @@ class Quantity:
         elif isinstance(unit, Quantity):
             return self >> unit.unit
         elif isinstance(unit, str):
-            if unit == "":
-                return self.cgs
-            else:
-                return Quantity(*ConvertUnit(Stringize((self.value, self.unit)), unit))
+            return Quantity(*ConvertUnit(Stringize((self.value, self.unit)), unit))
         else:
             raise Exception("Invalid unit")
 

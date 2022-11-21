@@ -26,15 +26,24 @@ print (rg_m87 >> 'au')
 #             ^
 #             |
 #       basic conversion
+```
 
+![demo1](demo/demo1.gif)
+
+```python
 # example #2
 psr_bfield = 1e12 * u.G    # magnetic field in Gauss
 gold_density = 19.3 * u.g / u.cm**3
-print (((psr_bfield / c.c)**2 / gold_density).cgs)
-#                                              ^
-#                                              |
-#                                       convert to cgs
+print (((psr_bfield / c.c)**2).cgs)
+#                               ^
+#                               |
+#                        convert to cgs
+print ((psr_bfield / c.c)**2 / gold_density >> "")
+```
 
+![demo2](demo/demo2.gif)
+
+```python
 # example #3
 gamma_factor = 1000
 b_field = u.MG        # = Mega Gauss 
@@ -50,7 +59,11 @@ print (c.hbar * sync_omega >> 'keV')
 # example #4
 # get the reduced physical type of the quantity (i.e., dimension in base units)
 print (~(c.hbar * sync_omega))
+```
 
+![demo3](demo/demo3.gif)
+
+```python
 # example #5
 # compare physical quantities in arbitrary units
 print ((c.R_sun >> 'ly') == c.R_sun)
@@ -80,10 +93,10 @@ rabbit_speed = Quantity(55, 'mi hr^-1')
 #                         |
 #                     as a tuple
 elephant_speed = Quantity('km hr^-1')
-print ((elephant_speed * my_speed / rabbit_speed) >> '')
+print ((elephant_speed * my_speed / rabbit_speed) >> 'ly Gy^-1')
 #                                                    ^
 #                                                    |
-#                                             converts to cgs if empty
+#                                             converts lightyear per Gigayear :)
 print ((elephant_speed * my_speed / rabbit_speed) >> elephant_speed)
 #                                                    ^
 #                                                    |
