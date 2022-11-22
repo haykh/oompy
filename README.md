@@ -1,6 +1,6 @@
-# OOM a/k/a order-of-magnitude v1.1.0
+# OOM a/k/a order-of-magnitude v1.2.0
 
-OOM is a python package for working with physical units and quantities. Unlike `astropy` it works in gaussian units and supports a multitude of physical units as well as constants.
+OOM is a python package for working with physical units and quantities. Unlike `astropy` it works in gaussian units, supports a multitude of physical dimensions, constants, and conversion between them. 
 
 ## Installation
 
@@ -16,6 +16,8 @@ Importing the main objects:
 from oom import Units as u
 from oom import Constants as c
 ```
+
+### Simple manipulations and unit conversions
 
 Several common usage examples:
 ```python
@@ -105,12 +107,37 @@ print ((elephant_speed * my_speed / rabbit_speed) >> elephant_speed)
 
 See demo [on replit.com](https://replit.com/@haykh1/oom-demo?v=1). 
 
+### Vague conversions
+This technique enables a comparison between incompatible units under certain assumptions. For instance, one might assume that we consider a photon, and thus its energy, wavelength and frequency are connected via `c` and `h`. 
+
+```python
+from oom import Assumptions as assume
+
+# uses h
+freq = 5 * u.GHz
+freq >> assume.Light >> "cm"
+
+# uses h-bar as freq has a dimension of radians per second
+freq = 2 * c.pi * u.rad / u.sec
+freq >> assume.Light >> "eV"
+
+# temperature to/from energy
+10000 * u.K >> assume.Thermal >> "eV"
+```
+
+To list all the available assumptions:
+```python
+print (list(assume))
+```
+
+
 ## To do
 
 - [x] (added in v1.1.0) comparison of quantities (`==`, `!=`, `>`, `<`, `>=`, `<=`)
 - [x] (added in v1.1.0) conversion with an rshift (`>>`) operator
 - [x] (added in v1.1.0) base unit extraction (with `~`)
+- [ ] unit tests 
 - [ ] add more units & constants
-- [ ] add a possibility to perform vague conversions (e.g. Kelvin to eV, Hz to erg, distance to redshift) etc.
-- [ ] add a formatting and TeX support
+- [x] (added in v1.2.0) add a possibility to perform vague conversions (e.g. Kelvin to eV, Hz to erg, distance to redshift) etc.
+- [ ] add formatting and TeX support
 - [ ] add a way to work with scaling relations

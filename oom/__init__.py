@@ -2,8 +2,10 @@ from enum import Enum
 from fractions import Fraction
 from typing import Union, Dict, Tuple
 
+
 def get_version() -> str:
-    return "1.1.0"
+    return "1.2.0"
+
 
 def addOrAppend(dct, ky, vl): return dct.update(
     {ky: vl}) if ky not in dct.keys() else dct.update({ky: dct[ky] + vl})
@@ -38,6 +40,12 @@ class Type(Enum):
     ACCELERATION = 9
     INFORMATION = 10
     TEMPERATURE = 11
+    ANGLE = 12
+
+
+class Assumptions(Enum):
+    Light = 0
+    Thermal = 1
 
 
 CGSUnits = {
@@ -46,7 +54,8 @@ CGSUnits = {
     Type.TIME: "sec",
     Type.MASS: "g",
     Type.TEMPERATURE: "K",
-    Type.INFORMATION: "bit"
+    Type.INFORMATION: "bit",
+    Type.ANGLE: "rad"
 }
 
 BaseUnits = {
@@ -55,7 +64,8 @@ BaseUnits = {
     Type.TIME: "sec",
     Type.MASS: "g",
     Type.TEMPERATURE: "K",
-    Type.INFORMATION: "bit"
+    Type.INFORMATION: "bit",
+    Type.ANGLE: "rad"
 }
 
 UnitEquivalencies = {
@@ -77,6 +87,9 @@ UnitEquivalencies = {
     "me": (9.109383701528e-28, "g"),
     "Msun": (1.98847e33, "g"),
     "lb": (453.5924, "g"),
+    # force
+    "N": (1, "kg m sec^-2"),
+    "dyn": (1e-5, "N"),
     # energy
     "erg": (1.0, "g cm^2 sec^-2"),
     "eV": (1.602177e-12, "erg"),
@@ -93,6 +106,8 @@ UnitEquivalencies = {
     "B": (8, "bit"),
     # frequency
     "Hz": (1., "sec^-1"),
+    # angle
+    "deg": (0.017453292519943295, "rad"),
 }
 
 ConstantValues = {
@@ -117,6 +132,9 @@ ConstantValues = {
     "m_p": (1.672623099e-24, "g"),
     "sigma_T": (6.6524587158e-29, "m^2"),
     "alpha_F": (1.0 / 137.035999873, ""),
+    # algebraic
+    "pi": (3.141592653589793, ""),
+    "e": (2.718281828459045, ""),
 }
 
 
@@ -202,6 +220,11 @@ def GetBaseType(unit: str = "") -> Dict['Type', 'Fraction']:
                 newf[k] = factorized[f]
                 break
     assert len(newf) == len(factorized), "Wrong base type inferrence"
+    if len(newf) > 1:
+        for f in newf.keys():
+            if f == Type.DIMENSIONLESS:
+                newf.pop(f)
+                break
     return newf
 
 
@@ -240,16 +263,53 @@ class Quantity:
             self.unit = args[1]
         else:
             raise Exception("Invalid arguments for Quantity.__init__")
+        self.assumption = None  # type: Union[Assumptions, None]
+
+    @property
+    def cgs(self) -> 'Quantity':
+        return self >> Stringize({CGSUnits[b]: p for b, p in GetBaseType(self.unit).items()})
+
+    def __to(self, unit: str) -> 'Quantity':
+        target = Quantity(unit)
+        if ~self == ~target:
+            return Quantity(*ConvertUnit(Stringize((self.value, self.unit)), unit))
+        elif self.assumption is None:
+            raise Exception("Cannot convert between different base types (no assumption)")
+        elif self.assumption == Assumptions.Light:
+            if ~target == ~Quantity("erg"):
+                if ~self == ~Quantity("Hz"):
+                    return (Constants.h * self) >> (unit)
+                elif ~self == ~Quantity("cm"):
+                    return (Constants.h * Constants.c / self) >> (unit)
+                elif ~self == ~Quantity("Hz rad"):
+                    return (Constants.hbar * self / Units.rad) >> (unit)
+            elif ~target == ~Quantity("Hz"):
+                if ~self == ~Quantity("erg"):
+                    return (self / Constants.h) >> (unit)
+                elif ~self == ~Quantity("cm"):
+                    return (Constants.c / self) >> (unit)
+            elif ~target == ~Quantity("cm"):
+                if ~self == ~Quantity("erg"):
+                    return (Constants.h * Constants.c / self) >> (unit)
+                elif ~self == ~Quantity("Hz"):
+                    return (Constants.c / self) >> (unit)
+                elif ~self == ~Quantity("Hz rad"):
+                    return (Constants.c * Units.rad / self) >> (unit)
+        elif self.assumption == Assumptions.Thermal:
+            if ~target == ~Quantity("erg"):
+                if ~self == ~Quantity("K"):
+                    return (Constants.k_B * self) >> (unit)
+            elif ~target == ~Quantity("K"):
+                if ~self == ~Quantity("erg"):
+                    return (self / Constants.k_B) >> (unit)
+        raise Exception(
+            f"Cannot convert from {~self} to {~target} with the assumption of {self.assumption}")
 
     def __repr__(self) -> str:
         return f"{self.value} {self.unit}"
 
     def __str__(self) -> str:
         return self.__repr__()
-
-    @property
-    def cgs(self) -> 'Quantity':
-        return self >> Stringize({CGSUnits[b]: p for b, p in GetBaseType(self.unit).items()})
 
     def __invert__(self) -> Dict['Type', 'Fraction']:
         return GetBaseType(self.unit)
@@ -263,10 +323,10 @@ class Quantity:
             return (self.value == other) and (self.unit == "")
         else:
             raise Exception("Invalid type for Quantity.__eq__")
-    
+
     def __ne__(self, other) -> bool:
         return not self.__eq__(other)
-    
+
     def __lt__(self, other) -> bool:
         if isinstance(other, Quantity):
             if ~other != self.__invert__():
@@ -280,23 +340,26 @@ class Quantity:
             return self.cgs.value < other
         else:
             raise Exception("Invalid type for Quantity.__lt__")
-        
+
     def __le__(self, other) -> bool:
         return self.__lt__(other) or self.__eq__(other)
 
     def __gt__(self, other) -> bool:
         return not self.__le__(other)
-    
+
     def __ge__(self, other) -> bool:
         return not self.__lt__(other)
 
-    def __rshift__(self, unit: Union[str, 'Quantity']) -> 'Quantity':
+    def __rshift__(self, unit: Union[str, 'Quantity', 'Assumptions']) -> 'Quantity':
         if self.unit == unit:
             return self
         elif isinstance(unit, Quantity):
             return self >> unit.unit
         elif isinstance(unit, str):
-            return Quantity(*ConvertUnit(Stringize((self.value, self.unit)), unit))
+            return self.__to(unit)
+        elif isinstance(unit, Assumptions):
+            self.assume(unit)
+            return self
         else:
             raise Exception("Invalid unit")
 
@@ -313,6 +376,9 @@ class Quantity:
             return Quantity(self.value + other, self.unit)
         else:
             raise Exception("Invalid arguments for Quantity.__add__")
+
+    def assume(self, assumption: 'Assumptions') -> None:
+        self.assumption = assumption
 
     def __radd__(self, other: ValidQuantity) -> 'Quantity':
         return self + other
