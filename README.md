@@ -1,11 +1,11 @@
-# OOM a/k/a order-of-magnitude v1.3.1
+# OOMpy a/k/a order-of-magnitude python
 
-OOM is a python package for working with physical units and quantities. Unlike `astropy` it works in gaussian units, supports a multitude of physical dimensions, constants, and conversion between them. 
+OOMpy is a python package for working with physical units and quantities. Unlike `astropy` it works in gaussian units, supports a multitude of physical dimensions, constants, and conversion between them. 
 
 ## Installation
 
 ```sh
-pip install git+https://github.com/haykh/oom.git@master
+pip install oompy
 ```
 
 ## Usage
@@ -13,8 +13,8 @@ pip install git+https://github.com/haykh/oom.git@master
 Importing the main objects:
 ```python
 # import units and constants
-from oom import Units as u
-from oom import Constants as c
+from oompy import Units as u
+from oompy import Constants as c
 ```
 
 ### Simple manipulations and unit conversions
@@ -24,26 +24,29 @@ Several common usage examples:
 # example #1
 m_m87 = 6.5e9 * u.Msun
 rg_m87 = c.G * m_m87 / c.c**2
-print (rg_m87 >> 'au')
-#             ^
-#             |
-#       basic conversion
+rg_m87 >> 'au'
+#       ^
+#       |
+# basic conversion
+#
+# Output: 64.16104122314108 au
 ```
-
-![demo1](demo/demo1.gif)
 
 ```python
 # example #2
 psr_bfield = 1e12 * u.G    # magnetic field in Gauss
 gold_density = 19.3 * u.g / u.cm**3
-print (((psr_bfield / c.c)**2).cgs)
-#                               ^
-#                               |
-#                        convert to cgs
-print ((psr_bfield / c.c)**2 / gold_density >> "")
+((psr_bfield / c.c)**2).cgs
+#                        ^
+#                        |
+#                 convert to cgs
+#
+# Output: 1112.6500560536185 g cm^-3
+#
+(psr_bfield / c.c)**2 / gold_density >> ""
+#
+# Output: 57.650261971690085
 ```
-
-![demo2](demo/demo2.gif)
 
 ```python
 # example #3
@@ -52,39 +55,38 @@ b_field = u.MG        # = Mega Gauss
 omega_B = (c.q_e * b_field / (c.m_e * c.c))
 sync_omega = gamma_factor**2 * omega_B
 
-print (c.hbar * sync_omega >> 'keV')
-#                               ^
-#                               |
-#                     understands powers of 10 prefixes 
-#                       (from 1e-12 to 1e18)
+c.hbar * sync_omega >> 'keV'
+#                       ^
+#                       |
+#             understands powers of 10 prefixes 
+#               (from 1e-12 to 1e18)
+#
+# Output: 11.576759893742388 keV
 
 # example #4
 # get the reduced physical type of the quantity (i.e., dimension in base units)
-print (~(c.hbar * sync_omega))
+~(c.hbar * sync_omega)
+#
+# Output: {<Type.MASS: 3>: Fraction(1, 1), <Type.LENGTH: 1>: Fraction(2, 1), <Type.TIME: 2>: Fraction(-2, 1)}
 ```
-
-![demo3](demo/demo3.gif)
 
 ```python
 # example #5
 # compare physical quantities in arbitrary units
-print ((c.R_sun >> 'ly') == c.R_sun)
-# evaluates to True
-print (c.M_sun < (c.m_e >> "lb"))
-# evaluates to False
-print (c.R_sun >= (c.m_e >> "lb"))
-# ! errors out (different units)
+(c.R_sun >> 'ly') == c.R_sun # True
+c.M_sun < (c.m_e >> "lb") # False
+c.R_sun >= (c.m_e >> "lb") # Error: incompatible units
 ```
 
 To see all units and/or constants:
 ```python
-print (u.all)
-print (c.all)
+u.all
+c.all
 ```
 
 Create your own quantities:
 ```python
-from oom import Quantity
+from oompy import Quantity
 # example #4
 my_speed = Quantity('25 m sec^-1')
 #                      ^
@@ -95,39 +97,41 @@ rabbit_speed = Quantity(55, 'mi hr^-1')
 #                         |
 #                     as a tuple
 elephant_speed = Quantity('km hr^-1')
-print ((elephant_speed * my_speed / rabbit_speed) >> 'ly Gy^-1')
-#                                                    ^
-#                                                    |
-#                                             converts lightyear per Gigayear :)
-print ((elephant_speed * my_speed / rabbit_speed) >> elephant_speed)
-#                                                    ^
-#                                                    |
-#                                         infer unit from another quantity
+(elephant_speed * my_speed / rabbit_speed) >> 'ly Gyr^-1'
+#                                                  ^
+#                                                  |
+#                                           converts lightyear per Gigayear :)
+#
+# Output: 0.9421232705492877 ly Gyr^-1
 ```
-
-See demo [on replit.com](https://replit.com/@haykh1/oom-demo?v=1). 
 
 ### Vague conversions
 This technique enables a comparison between incompatible units under certain assumptions. For instance, one might assume that we consider a photon, and thus its energy, wavelength and frequency are connected via `c` and `h`. 
 
 ```python
-from oom import Assumptions as assume
+from oompy import Assumptions as assume
 
 # uses h
 freq = 5 * u.GHz
 freq >> assume.Light >> "cm"
+#
+# Output: 5.995849160000001 cm
 
 # uses h-bar as freq has a dimension of radians per second
 freq = 2 * c.pi * u.rad / u.sec
 freq >> assume.Light >> "eV"
+#
+# Output: 4.1356667496413186e-15 eV
 
 # temperature to/from energy
 10000 * u.K >> assume.Thermal >> "eV"
+#
+# Output: 0.8617339407568576 eV
 ```
 
 To list all the available assumptions:
 ```python
-print (list(assume))
+list(assume)
 ```
 
 ## For developers

@@ -1,6 +1,6 @@
-from oom import Units as u
-from oom import Constants as c
-from oom import Assumptions as assume
+from oompy import Units as u
+from oompy import Constants as c
+from oompy import Assumptions as assume
 
 
 def test_constants():
