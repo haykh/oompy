@@ -4,11 +4,13 @@ from typing import Union, Dict, Tuple
 
 
 def get_version() -> str:
-    return "1.2.0"
+    return "1.3.0"
 
 
-def addOrAppend(dct, ky, vl): return dct.update(
-    {ky: vl}) if ky not in dct.keys() else dct.update({ky: dct[ky] + vl})
+def addOrAppend(dct, ky, vl):
+    return (
+        dct.update({ky: vl}) if ky not in dct.keys() else dct.update({ky: dct[ky] + vl})
+    )
 
 
 Powers = {
@@ -23,7 +25,7 @@ Powers = {
     "G": 1e9,
     "T": 1e12,
     "P": 1e15,
-    "E": 1e18
+    "E": 1e18,
 }
 
 
@@ -55,7 +57,7 @@ CGSUnits = {
     Type.MASS: "g",
     Type.TEMPERATURE: "K",
     Type.INFORMATION: "bit",
-    Type.ANGLE: "rad"
+    Type.ANGLE: "rad",
 }
 
 BaseUnits = {
@@ -65,7 +67,7 @@ BaseUnits = {
     Type.MASS: "g",
     Type.TEMPERATURE: "K",
     Type.INFORMATION: "bit",
-    Type.ANGLE: "rad"
+    Type.ANGLE: "rad",
 }
 
 UnitEquivalencies = {
@@ -74,15 +76,15 @@ UnitEquivalencies = {
     "in": (0.0254, "m"),
     "yd": (0.9144, "m"),
     "mi": (1609.344, "m"),
-    "au": (149597870700., "m"),
-    "ly": (9460730472580800., "m"),
+    "au": (149597870700.0, "m"),
+    "ly": (9460730472580800.0, "m"),
     "pc": (3.085677581491362e16, "m"),
     # time
-    "day": (86400., "sec"),
-    "yr": (31557600., "sec"),
+    "day": (86400.0, "sec"),
+    "yr": (31557600.0, "sec"),
     "month": (30.436875 * 24 * 60 * 60, "sec"),
-    "min": (60., "sec"),
-    "hr": (3600., "sec"),
+    "min": (60.0, "sec"),
+    "hr": (3600.0, "sec"),
     # mass
     "me": (9.109383701528e-28, "g"),
     "Msun": (1.98847e33, "g"),
@@ -99,13 +101,13 @@ UnitEquivalencies = {
     "hp": (7456998715.8, "erg sec^-1"),
     "W": (1e7, "erg sec^-1"),
     # magnetic field
-    "G": (1., "erg^1/2 cm^-3/2"),
+    "G": (1.0, "erg^1/2 cm^-3/2"),
     # charge
-    "statC": (1., "cm^3/2 g^1/2 sec^-1"),
+    "statC": (1.0, "cm^3/2 g^1/2 sec^-1"),
     # information
     "B": (8, "bit"),
     # frequency
-    "Hz": (1., "sec^-1"),
+    "Hz": (1.0, "sec^-1"),
     # angle
     "deg": (0.017453292519943295, "rad"),
 }
@@ -113,7 +115,7 @@ UnitEquivalencies = {
 ConstantValues = {
     # fundamental
     "G": (6.6743015e-11, "m^3 kg^-1 sec^-2"),
-    "c": (299792458., "m sec^-1"),
+    "c": (299792458.0, "m sec^-1"),
     "hbar": (1.054571817e-34, "J sec"),
     "h": (6.62607015e-34, "J sec"),
     # secondary
@@ -123,6 +125,7 @@ ConstantValues = {
     "M_sun": (1.98847e33, "g"),
     "R_sun": (695700, "km"),
     "L_sun": (3.828e26, "W"),
+    "L_edd": (1.257104e38, "erg sec^-1"),
     "M_earth": (5.9722e24, "kg"),
     "R_earth": (6371, "km"),
     # particle physics
@@ -140,32 +143,39 @@ ConstantValues = {
 
 def StripCoeff(unit_str: str) -> Tuple[float, str]:
     coeff = 1.0
-    if len(unit_str.split(' ')) > 1:
+    if len(unit_str.split(" ")) > 1:
         try:
-            coeff = float(unit_str.split(' ')[0])
-            unit_str = " ".join(unit_str.split(' ')[1:])
+            coeff = float(unit_str.split(" ")[0])
+            unit_str = " ".join(unit_str.split(" ")[1:])
         except:
             pass
     return coeff, unit_str
 
 
-def ParseFraction(frac: str) -> 'Fraction':
-    return Fraction(Fraction(frac.split('/')[0]), Fraction(frac.split('/')[1]) if len(frac.split('/')) > 1 else None)
+def ParseFraction(frac: str) -> "Fraction":
+    return Fraction(
+        Fraction(frac.split("/")[0]),
+        Fraction(frac.split("/")[1]) if len(frac.split("/")) > 1 else None,
+    )
 
 
-def ParseUnit(unit_str: str) -> Tuple[float, Dict[str, 'Fraction']]:
+def ParseUnit(unit_str: str) -> Tuple[float, Dict[str, "Fraction"]]:
     coeff, unit_str = StripCoeff(unit_str)
     unit_dict = {}  # type: dict[str, Fraction]
-    for u in unit_str.split(' '):
-        pwr = (ParseFraction(u.split('^')[1]) if len(
-            u.split('^')) > 1 else Fraction(1, 1))
-        addOrAppend(unit_dict, u.split('^')[0], pwr)
+    for u in unit_str.split(" "):
+        pwr = (
+            ParseFraction(u.split("^")[1]) if len(u.split("^")) > 1 else Fraction(1, 1)
+        )
+        unit = u.split("^")[0]
+        addOrAppend(unit_dict, unit, pwr if unit != "" else Fraction(0, 1))
     return coeff, unit_dict
 
 
 def Stringize(fct: Union[Dict, Tuple]) -> str:
     if isinstance(fct, dict):
-        return " ".join([f"{u}^{p}" if p != 1 else f"{u}" for u, p in fct.items() if p != 0])
+        return " ".join(
+            [f"{u}^{p}" if p != 1 else f"{u}" for u, p in fct.items() if p != 0]
+        )
     elif isinstance(fct, tuple):
         if isinstance(fct[1], dict):
             return f"{fct[0]} {Stringize(fct[1])}" if fct[0] != 1 else Stringize(fct[1])
@@ -178,7 +188,7 @@ def Stringize(fct: Union[Dict, Tuple]) -> str:
 
 
 def JoinUnits(unit: str) -> str:
-    return (Stringize(ParseUnit(unit)))
+    return Stringize(ParseUnit(unit))
 
 
 def ReduceUnitToBase(unit: str = "") -> str:
@@ -195,23 +205,25 @@ def ReduceUnitToBase(unit: str = "") -> str:
             for u2, p2 in nu.items():
                 addOrAppend(newunits, u2, p * p2)
             coeff *= nc**p
-        elif u[1:] in BaseUnits.values() and u[0] in Powers.keys() and u[1:] != '':
+        elif u[1:] in BaseUnits.values() and u[0] in Powers.keys() and u[1:] != "":
             addOrAppend(newunits, u[1:], p)
-            coeff *= Powers[u[0]]**p
-        elif u[1:] in UnitEquivalencies.keys() and u[0] in Powers.keys() and u[1:] != '':
+            coeff *= Powers[u[0]] ** p
+        elif (
+            u[1:] in UnitEquivalencies.keys() and u[0] in Powers.keys() and u[1:] != ""
+        ):
             eq_c, eq_u = UnitEquivalencies[u[1:]]
             eq_str = Stringize((eq_c, eq_u))
             eq_base = ReduceUnitToBase(eq_str)
             nc, nu = ParseUnit(eq_base)
             for u2, p2 in nu.items():
                 addOrAppend(newunits, u2, p * p2)
-            coeff *= nc**p * Powers[u[0]]**p
+            coeff *= nc**p * Powers[u[0]] ** p
         else:
             raise Exception(f"Invalid unit: {u}")
     return Stringize((coeff, newunits))
 
 
-def GetBaseType(unit: str = "") -> Dict['Type', 'Fraction']:
+def GetBaseType(unit: str = "") -> Dict["Type", "Fraction"]:
     _, factorized = ParseUnit(ReduceUnitToBase(unit))
     newf = {}
     for f in factorized.keys():
@@ -221,9 +233,9 @@ def GetBaseType(unit: str = "") -> Dict['Type', 'Fraction']:
                 break
     assert len(newf) == len(factorized), "Wrong base type inferrence"
     if len(newf) > 1:
-        for f in newf.keys():
-            if f == Type.DIMENSIONLESS:
-                newf.pop(f)
+        for f2 in newf.keys():
+            if f2 == Type.DIMENSIONLESS:
+                newf.pop(f2)
                 break
     return newf
 
@@ -231,12 +243,15 @@ def GetBaseType(unit: str = "") -> Dict['Type', 'Fraction']:
 def RaiseUnitsToPower(unit: str, pwr: Union[int, float, Fraction]) -> str:
     pwr = Fraction(pwr).limit_denominator(1000000)
     c, u = ParseUnit(unit)
-    return Stringize((c**pwr, Stringize({b: Fraction(Fraction(pwr) * p) for b, p in u.items()})))
+    return Stringize(
+        (c**pwr, Stringize({b: Fraction(Fraction(pwr) * p) for b, p in u.items()}))
+    )
 
 
 def ConvertUnit(src: str, dst: str) -> Tuple[float, str]:
-    assert GetBaseType(src) == GetBaseType(dst), \
-        "Cannot convert between different base types"
+    assert GetBaseType(src) == GetBaseType(
+        dst
+    ), "Cannot convert between different base types"
     _, dst_u = StripCoeff(dst)
     red_src = ReduceUnitToBase(src)
     red_dst = ReduceUnitToBase(dst)
@@ -245,7 +260,7 @@ def ConvertUnit(src: str, dst: str) -> Tuple[float, str]:
     return c1 / c2, dst_u
 
 
-ValidQuantity = Union['Quantity', tuple, int, float]
+ValidQuantity = Union["Quantity", tuple, int, float]
 
 
 class Quantity:
@@ -258,7 +273,11 @@ class Quantity:
         elif (len(args) == 1) and isinstance(args[0], (int, float)):
             self.value = args[0]
             self.unit = ""
-        elif (len(args) == 2) and isinstance(args[0], (int, float)) and isinstance(args[1], str):
+        elif (
+            (len(args) == 2)
+            and isinstance(args[0], (int, float))
+            and isinstance(args[1], str)
+        ):
             self.value = args[0]
             self.unit = args[1]
         else:
@@ -266,15 +285,19 @@ class Quantity:
         self.assumption = None  # type: Union[Assumptions, None]
 
     @property
-    def cgs(self) -> 'Quantity':
-        return self >> Stringize({CGSUnits[b]: p for b, p in GetBaseType(self.unit).items()})
+    def cgs(self) -> "Quantity":
+        return self >> Stringize(
+            {CGSUnits[b]: p for b, p in GetBaseType(self.unit).items()}
+        )
 
-    def __to(self, unit: str) -> 'Quantity':
+    def __to(self, unit: str) -> "Quantity":
         target = Quantity(unit)
         if ~self == ~target:
             return Quantity(*ConvertUnit(Stringize((self.value, self.unit)), unit))
         elif self.assumption is None:
-            raise Exception("Cannot convert between different base types (no assumption)")
+            raise Exception(
+                "Cannot convert between different base types (no assumption)"
+            )
         elif self.assumption == Assumptions.Light:
             if ~target == ~Quantity("erg"):
                 if ~self == ~Quantity("Hz"):
@@ -303,7 +326,8 @@ class Quantity:
                 if ~self == ~Quantity("erg"):
                     return (self / Constants.k_B) >> (unit)
         raise Exception(
-            f"Cannot convert from {~self} to {~target} with the assumption of {self.assumption}")
+            f"Cannot convert from {~self} to {~target} with the assumption of {self.assumption}"
+        )
 
     def __repr__(self) -> str:
         return f"{self.value} {self.unit}"
@@ -311,7 +335,7 @@ class Quantity:
     def __str__(self) -> str:
         return self.__repr__()
 
-    def __invert__(self) -> Dict['Type', 'Fraction']:
+    def __invert__(self) -> Dict["Type", "Fraction"]:
         return GetBaseType(self.unit)
 
     def __eq__(self, other) -> bool:
@@ -320,7 +344,9 @@ class Quantity:
         elif isinstance(other, tuple):
             return self.value == Quantity(*other)
         elif isinstance(other, (int, float)):
-            return (self.value == other) and (self.unit == "")
+            return (self.cgs.value == other) and (
+                ParseUnit(self.cgs.unit) == ParseUnit("")
+            )
         else:
             raise Exception("Invalid type for Quantity.__eq__")
 
@@ -350,7 +376,7 @@ class Quantity:
     def __ge__(self, other) -> bool:
         return not self.__lt__(other)
 
-    def __rshift__(self, unit: Union[str, 'Quantity', 'Assumptions']) -> 'Quantity':
+    def __rshift__(self, unit: Union[str, "Quantity", "Assumptions"]) -> "Quantity":
         if self.unit == unit:
             return self
         elif isinstance(unit, Quantity):
@@ -363,7 +389,7 @@ class Quantity:
         else:
             raise Exception("Invalid unit")
 
-    def __add__(self, other: ValidQuantity) -> 'Quantity':
+    def __add__(self, other: ValidQuantity) -> "Quantity":
         if isinstance(other, Quantity):
             if self.unit == other.unit:
                 return Quantity(self.value + other.value, self.unit)
@@ -377,24 +403,29 @@ class Quantity:
         else:
             raise Exception("Invalid arguments for Quantity.__add__")
 
-    def assume(self, assumption: 'Assumptions') -> None:
+    def assume(self, assumption: "Assumptions") -> None:
         self.assumption = assumption
 
-    def __radd__(self, other: ValidQuantity) -> 'Quantity':
+    def __radd__(self, other: ValidQuantity) -> "Quantity":
         return self + other
 
-    def __neg__(self) -> 'Quantity':
+    def __neg__(self) -> "Quantity":
         return Quantity(-self.value, self.unit)
 
-    def __sub__(self, other: ValidQuantity) -> 'Quantity':
+    def __abs__(self) -> "Quantity":
+        return Quantity(abs(self.value), self.unit)
+
+    def __sub__(self, other: ValidQuantity) -> "Quantity":
         return self + (-Quantity(other))
 
-    def __rsub__(self, other: ValidQuantity) -> 'Quantity':
+    def __rsub__(self, other: ValidQuantity) -> "Quantity":
         return (-self) + other
 
-    def __mul__(self, other: ValidQuantity) -> 'Quantity':
+    def __mul__(self, other: ValidQuantity) -> "Quantity":
         if isinstance(other, Quantity):
-            return Quantity(self.value * other.value, JoinUnits(" ".join([self.unit, other.unit])))
+            return Quantity(
+                self.value * other.value, JoinUnits(" ".join([self.unit, other.unit]))
+            )
         elif isinstance(other, tuple):
             return self * Quantity(*other)
         elif isinstance(other, (int, float)):
@@ -402,29 +433,32 @@ class Quantity:
         else:
             raise Exception("Invalid arguments for Quantity.__mul__")
 
-    def __rmul__(self, other: ValidQuantity) -> 'Quantity':
+    def __rmul__(self, other: ValidQuantity) -> "Quantity":
         return self * other
 
-    def __pow__(self, other: ValidQuantity) -> 'Quantity':
+    def __pow__(self, other: ValidQuantity) -> "Quantity":
         if isinstance(other, Quantity):
             assert other.unit == "", "Invalid arguments for Quantity.__pow__"
-            return self**(other.value)
+            return self ** (other.value)
         elif isinstance(other, tuple):
-            return self**Quantity(*other)
+            return self ** Quantity(*other)
         elif isinstance(other, (int, float)):
             return Quantity(self.value**other, RaiseUnitsToPower(self.unit, other))
 
-    def __truediv__(self, other: ValidQuantity) -> 'Quantity':
-        return self * (Quantity(other)**(-1))
+    def __truediv__(self, other: ValidQuantity) -> "Quantity":
+        return self * (Quantity(other) ** (-1))
 
-    def __rtruediv__(self, other: ValidQuantity) -> 'Quantity':
-        return (self**(-1)) * other
+    def __rtruediv__(self, other: ValidQuantity) -> "Quantity":
+        return (self ** (-1)) * other
 
 
 class UnitsClass:
     def __init__(self) -> None:
-        allunits = [[p + u for p in [''] + list(Powers.keys())] for u in list(
-            BaseUnits.values()) + list(UnitEquivalencies.keys()) if u != '']
+        allunits = [
+            [p + u for p in [""] + list(Powers.keys())]
+            for u in list(BaseUnits.values()) + list(UnitEquivalencies.keys())
+            if u != ""
+        ]
         self.units = {u: Quantity(u) for u in sum(allunits, [])}
 
     def __getattribute__(self, name):

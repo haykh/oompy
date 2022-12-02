@@ -1,4 +1,4 @@
-# OOM a/k/a order-of-magnitude v1.2.0
+# OOM a/k/a order-of-magnitude v1.3.0
 
 OOM is a python package for working with physical units and quantities. Unlike `astropy` it works in gaussian units, supports a multitude of physical dimensions, constants, and conversion between them. 
 
@@ -130,14 +130,32 @@ To list all the available assumptions:
 print (list(assume))
 ```
 
+## For developers
+
+Testing the code is done in three steps using `black` to check the formatting, `mypy` to check the types and typehints, and `pytest` to run the tests. First install all the dependencies:
+
+```sh
+pip install black mypy pytest
+```
+
+Then run the tests one-by-one:
+
+```sh
+black oom --check --diff
+mypy oom
+pytest
+```
+
+These tests are also run automatically on every commit using GitHub Actions.
 
 ## To do
 
+- [ ] add more units & constants
 - [x] (added in v1.1.0) comparison of quantities (`==`, `!=`, `>`, `<`, `>=`, `<=`)
 - [x] (added in v1.1.0) conversion with an rshift (`>>`) operator
 - [x] (added in v1.1.0) base unit extraction (with `~`)
-- [ ] unit tests 
-- [ ] add more units & constants
-- [x] (added in v1.2.0) add a possibility to perform vague conversions (e.g. Kelvin to eV, Hz to erg, distance to redshift) etc.
+- [x] (added in v1.2.0) add a possibility to perform vague conversions (e.g. Kelvin to eV, Hz to erg) etc.
+- [x] (added in v1.3.0) unit tests
+- [ ] distance to redshift vague conversion
 - [ ] add formatting and TeX support
 - [ ] add a way to work with scaling relations
