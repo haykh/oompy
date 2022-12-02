@@ -22,10 +22,17 @@ def test_units():
         15 * u.kpc / u.Mhr + 25e6 * u.mi / u.sec
     ) == 168803499228.80676 * u.m / u.sec
     assert 5 * u.MHz * 0.25 * u.sec == 1250000.0
-    assert (5 * u.GHz >> assume.Light >> "cm") == 5.995849160000001 * u.cm
     psr_bfield = 1e12 * u.G
     gold_density = 19.3 * u.g / u.cm**3
     assert (psr_bfield / c.c) ** 2 / gold_density == 57.650261971690085
     assert 2e6 * u.hp / (15000 * u.erg / u.sec) == 994266495440.0001
     assert ((u.sec * c.q_e * u.G / (c.m_e * c.c * 2 * c.pi)) >> "") == 2799248.72930016
     assert (u.sec * c.q_e * u.G / (c.m_e * c.c * 2 * c.pi)) == 2799248.72930016
+
+
+def test_assumptions():
+    assert (5 * u.GHz >> assume.Light >> "cm") == 5.995849160000001 * u.cm
+    assert (
+        6000 * u.K >> assume.Thermal >> "eV" >> assume.Light >> "nm"
+        == 2397.95920462134 * u.nm
+    )

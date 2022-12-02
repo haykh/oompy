@@ -1,4 +1,4 @@
-# OOM a/k/a order-of-magnitude v1.3.0
+# OOM a/k/a order-of-magnitude v1.3.1
 
 OOM is a python package for working with physical units and quantities. Unlike `astropy` it works in gaussian units, supports a multitude of physical dimensions, constants, and conversion between them. 
 
