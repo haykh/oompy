@@ -1,11 +1,11 @@
 from setuptools import setup
+from pathlib import Path
 
-try:
-    from pypandoc import convert
+this_directory = Path(__file__).parent
+long_description = (this_directory / "README.md").read_text()
 
-    read_md = lambda f: convert(f, "rst")
-except ImportError:
-    print("warning: pypandoc module not found, could not convert Markdown to RST")
-    read_md = lambda f: open(f, "r").read()
-
-setup(use_scm_version=True, long_description=read_md("README.md"), install_requires=[])
+setup(
+    use_scm_version=True,
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+)
