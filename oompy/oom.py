@@ -58,6 +58,8 @@ class Quantity:
             return ConvertAssuming_Light(self, target)
         elif self.assumption == Assumptions.Thermal:
             return ConvertAssuming_Thermal(self, target)
+        elif self.assumption == Assumptions.Redshift:
+            return ConvertAssuming_Redshift(self, target)
         raise Exception(
             f"Cannot convert from {~self} to {~target} with the assumption of {self.assumption}"
         )
@@ -204,6 +206,7 @@ class UnitsClass:
 class Assumptions(Enum):
     Light = 0
     Thermal = 1
+    Redshift = 2
 
 
 class ConstantsClass:
@@ -240,12 +243,11 @@ def ConvertAssuming_Light(source: "Quantity", target: "Quantity") -> "Quantity":
             return (Constants.c / source) >> (unit)
         elif ~source == ~Quantity("Hz rad"):
             return (Constants.c * Units.rad / source) >> (unit)
-    raise Exception("Cannot convert between different base types (no assumption)")
+    raise Exception("Cannot convert between different base types")
 
 
 def ConvertAssuming_Thermal(source: "Quantity", target: "Quantity") -> "Quantity":
     Constants = ConstantsClass()
-    Units = UnitsClass()
     unit = target.unit
     if ~target == ~Quantity("erg"):
         if ~source == ~Quantity("K"):
@@ -253,4 +255,44 @@ def ConvertAssuming_Thermal(source: "Quantity", target: "Quantity") -> "Quantity
     elif ~target == ~Quantity("K"):
         if ~source == ~Quantity("erg"):
             return (source / Constants.k_B) >> (unit)
-    raise Exception("Cannot convert between different base types (no assumption)")
+    raise Exception("Cannot convert between different base types")
+
+
+def ConvertAssuming_Redshift(source: "Quantity", target: "Quantity") -> "Quantity":
+    import scipy.integrate as integrate  # type: ignore
+    from scipy.optimize import fsolve  # type: ignore
+    import math
+
+    Constants = ConstantsClass()
+    unit = target.unit
+    if ~target == ~Quantity("cm"):
+        assert ~source == ~Quantity("")
+        return (Constants.c / Constants.H_0) * integrate.quad(
+            lambda x: 1
+            / math.sqrt(
+                Constants.omega_Matter.value * (1 + x) ** 3
+                + Constants.omega_Lambda.value
+            ),
+            0,
+            (source >> "").value,
+        )[0] >> (unit)
+    elif ~target == ~Quantity(""):
+        assert ~source == ~Quantity("cm")
+
+        def func(Z):
+            return (
+                (Constants.c / Constants.H_0)
+                * integrate.quad(
+                    lambda x: 1
+                    / math.sqrt(
+                        Constants.omega_Matter.value * (1 + x) ** 3
+                        + Constants.omega_Lambda.value
+                    ),
+                    0,
+                    Z,
+                )[0]
+                >> "Gpc"
+            ).value - (source >> "Gpc").value
+
+        return Quantity(fsolve(func, 1)[0], "")
+    raise Exception("Cannot convert between different base types")

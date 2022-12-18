@@ -24,4 +24,8 @@ ConstantValues = {
     # algebraic
     "pi": (3.141592653589793, ""),
     "e": (2.718281828459045, ""),
+    # cosmology
+    "H_0": (67.5, "km sec^-1 Mpc^-1"),
+    "omega_Matter": (0.315, ""),
+    "omega_Lambda": (0.685, ""),
 }

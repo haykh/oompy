@@ -5,6 +5,10 @@ from typing import Union, Dict, Tuple
 from .utils import addOrAppend, Stringize, ParseUnit, StripCoeff
 
 Powers = {
+    "y": 1e-24,
+    "z": 1e-21,
+    "a": 1e-18,
+    "f": 1e-15,
     "p": 1e-12,
     "n": 1e-9,
     "u": 1e-6,
@@ -17,6 +21,8 @@ Powers = {
     "T": 1e12,
     "P": 1e15,
     "E": 1e18,
+    "Z": 1e21,
+    "Y": 1e24,
 }
 
 
@@ -75,6 +81,8 @@ UnitEquivalencies = {
     "me": (9.109383701528e-28, "g"),
     "Msun": (1.98847e33, "g"),
     "lb": (453.5924, "g"),
+    # velocity
+    "knot": (1.852, "km hr^-1"),
     # force
     "N": (1, "kg m sec^-2"),
     "dyn": (1e-5, "N"),

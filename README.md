@@ -109,7 +109,7 @@ elephant_speed = Quantity('km hr^-1')
 This technique enables a comparison between incompatible units under certain assumptions. For instance, one might assume that we consider a photon, and thus its energy, wavelength and frequency are connected via `c` and `h`. 
 
 ```python
-from oompy import Assumptions as assume
+from oompy import Assumptions as assume, Quantity
 
 # uses h
 freq = 5 * u.GHz
@@ -127,6 +127,16 @@ freq >> assume.Light >> "eV"
 10000 * u.K >> assume.Thermal >> "eV"
 #
 # Output: 0.8617339407568576 eV
+
+# compute co-moving distance for a redshift
+Quantity(5, "") >> assume.Redshift >> "Gly"
+#
+# Output: 25.878013331255335 Gly
+#
+# compute redshift for a co-moving distance
+5 * u.Gpc >> assume.Redshift >> ""
+#
+# Output: 1.8018944589315433
 ```
 
 To list all the available assumptions:
@@ -155,11 +165,16 @@ These tests are also run automatically on every commit using GitHub Actions.
 ## To do
 
 - [ ] add more units & constants
+  - [x] (added in v1.3.5) knots
+  - [ ] fathom
+  - [ ] nautical miles
 - [x] (added in v1.1.0) comparison of quantities (`==`, `!=`, `>`, `<`, `>=`, `<=`)
 - [x] (added in v1.1.0) conversion with an rshift (`>>`) operator
 - [x] (added in v1.1.0) base unit extraction (with `~`)
 - [x] (added in v1.2.0) add a possibility to perform vague conversions (e.g. Kelvin to eV, Hz to erg) etc.
 - [x] (added in v1.3.0) unit tests
-- [ ] distance to redshift vague conversion
-- [ ] add formatting and TeX support
+- [ ] add support for Ki, Mi, Gi (2e10, 2e20, 2e30)
+- [x] (added in v1.3.5) distance to redshift vague conversion
+- [ ] (TBA in v1.4.0) work with numpy arrays
+- [ ] (TBA in v1.4.0) add formatting and TeX support
 - [ ] add a way to work with scaling relations

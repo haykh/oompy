@@ -1,6 +1,4 @@
-from oompy import Units as u
-from oompy import Constants as c
-from oompy import Assumptions as assume
+from oompy import Units as u, Constants as c, Assumptions as assume, Quantity
 
 
 def test_constants():
@@ -28,6 +26,7 @@ def test_units():
     assert 2e6 * u.hp / (15000 * u.erg / u.sec) == 994266495440.0001
     assert ((u.sec * c.q_e * u.G / (c.m_e * c.c * 2 * c.pi)) >> "") == 2799248.72930016
     assert (u.sec * c.q_e * u.G / (c.m_e * c.c * 2 * c.pi)) == 2799248.72930016
+    assert (c.m_e * c.c**2 >> "lb knot^2").value == 6.820051733957203e-13
 
 
 def test_assumptions():
@@ -36,3 +35,5 @@ def test_assumptions():
         6000 * u.K >> assume.Thermal >> "eV" >> assume.Light >> "nm"
         == 2397.95920462134 * u.nm
     )
+    assert (Quantity(1, "") >> assume.Redshift >> "pc") == 3396224009.3212013 * u.pc
+    assert (5 * u.Gpc >> assume.Redshift >> "") == 1.8018944589315433
