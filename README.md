@@ -1,5 +1,7 @@
 # OOMpy a/k/a order-of-magnitude python
 
+[![Python package](https://github.com/haykh/oompy/actions/workflows/github-pytest.yml/badge.svg)](https://github.com/haykh/oompy/actions/workflows/github-pytest.yml)
+
 OOMpy is a python package for working with physical units and quantities. Unlike `astropy` it works in gaussian units, supports a multitude of physical dimensions, constants, and conversion between them. 
 
 ## Installation
