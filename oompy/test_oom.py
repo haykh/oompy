@@ -37,3 +37,16 @@ def test_assumptions():
     )
     assert (Quantity(1, "") >> assume.Redshift >> "pc") == 3396224009.3212013 * u.pc
     assert (5 * u.Gpc >> assume.Redshift >> "") == 1.8018944589315433
+
+
+def test_numpy():
+    import numpy as np
+
+    assert np.all(
+        (np.array([1, 2, 3]) * u.erg * 2)
+        == [
+            Quantity(199176423552.0, "g m^2 yr^-2"),
+            Quantity(398352847104.0, "g m^2 yr^-2"),
+            Quantity(597529270656.0, "g m^2 yr^-2"),
+        ]
+    )

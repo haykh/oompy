@@ -1,5 +1,7 @@
 # OOMpy a/k/a order-of-magnitude python
 
+[![Python package](https://github.com/haykh/oompy/actions/workflows/github-pytest.yml/badge.svg)](https://github.com/haykh/oompy/actions/workflows/github-pytest.yml)
+
 OOMpy is a python package for working with physical units and quantities. Unlike `astropy` it works in gaussian units, supports a multitude of physical dimensions, constants, and conversion between them. 
 
 ## Installation
@@ -71,7 +73,7 @@ c.hbar * sync_omega >> 'keV'
 ```
 
 ```python
-# example #5
+# example #4
 # compare physical quantities in arbitrary units
 (c.R_sun >> 'ly') == c.R_sun # True
 c.M_sun < (c.m_e >> "lb") # False
@@ -87,7 +89,7 @@ c.all
 Create your own quantities:
 ```python
 from oompy import Quantity
-# example #4
+# example #5
 my_speed = Quantity('25 m sec^-1')
 #                      ^
 #                      |
@@ -155,8 +157,8 @@ pip install black mypy pytest
 Then run the tests one-by-one:
 
 ```sh
-black oom --check --diff
-mypy oom
+black oompy --check --diff
+mypy oompy
 pytest
 ```
 
@@ -175,6 +177,6 @@ These tests are also run automatically on every commit using GitHub Actions.
 - [x] (added in v1.3.0) unit tests
 - [ ] add support for Ki, Mi, Gi (2e10, 2e20, 2e30)
 - [x] (added in v1.3.5) distance to redshift vague conversion
-- [ ] (TBA in v1.4.0) work with numpy arrays
-- [ ] (TBA in v1.4.0) add formatting and TeX support
+- [x] (added in v1.4.0) work with numpy arrays
+- [ ] (TBA in v1.5.0) add formatting and TeX support
 - [ ] add a way to work with scaling relations
