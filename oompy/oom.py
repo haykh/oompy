@@ -112,14 +112,14 @@ class Quantity:
         return not self.__lt__(other)
 
     def __rshift__(self, unit: Union[str, "Quantity", "Assumptions"]) -> "Quantity":
-        if self.unit == unit:
-            return self
-        elif isinstance(unit, Quantity):
+        if isinstance(unit, Quantity):
             return self >> unit.unit
         elif isinstance(unit, str):
             return self.__to(unit)
         elif isinstance(unit, Assumptions):
             self.assume(unit)
+            return self
+        elif self.unit == unit:
             return self
         else:
             raise Exception("Invalid unit")
@@ -185,6 +185,9 @@ class Quantity:
 
     def __rtruediv__(self, other: ValidQuantity) -> "Quantity":
         return (self ** (-1)) * other
+
+    def __float__(self) -> float:
+        return self.value
 
 
 class UnitsClass:

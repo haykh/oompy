@@ -1,3 +1,5 @@
+__version__ = "1.4.0"
+
 from .oom import UnitsClass, ConstantsClass, Quantity, Assumptions
 
 Units = UnitsClass()
