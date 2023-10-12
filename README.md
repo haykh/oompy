@@ -168,6 +168,7 @@ These tests are also run automatically on every commit using GitHub Actions.
 
 - [ ] add more units & constants
   - [x] (added in v1.3.5) knots
+  - [ ] Rsun as measuring unit
   - [ ] fathom
   - [ ] nautical miles
 - [x] (added in v1.1.0) comparison of quantities (`==`, `!=`, `>`, `<`, `>=`, `<=`)
@@ -180,3 +181,4 @@ These tests are also run automatically on every commit using GitHub Actions.
 - [x] (added in v1.4.0) work with numpy arrays
 - [ ] (TBA in v1.5.0) add formatting and TeX support
 - [ ] add a way to work with scaling relations
+- [ ] add `__format__` for `Quantity` objects
