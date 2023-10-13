@@ -1,4 +1,4 @@
-__version__ = "1.4.0"
+__version__ = "1.4.1"
 
 from .oom import UnitsClass, ConstantsClass, Quantity, Assumptions
 

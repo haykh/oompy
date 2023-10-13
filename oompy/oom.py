@@ -47,6 +47,8 @@ class Quantity:
         )
 
     def __to(self, unit: str) -> "Quantity":
+        if unit == "CGS":
+            return self.cgs
         target = Quantity(unit)
         if ~self == ~target:
             return Quantity(*ConvertUnit(Stringize((self.value, self.unit)), unit))
@@ -69,6 +71,15 @@ class Quantity:
 
     def __str__(self) -> str:
         return self.__repr__()
+
+    def __hash__(self) -> int:
+        return hash(self.cgs.value)
+
+    def __format__(self, format_spec: str) -> str:
+        if GetBaseType(self.unit) == GetBaseType(""):
+            return f"{self.value:{format_spec}}"
+        else:
+            return f"{self.value:{format_spec}} {self.unit}"
 
     def __invert__(self) -> Dict["Type", "Fraction"]:
         return GetBaseType(self.unit)
@@ -266,16 +277,18 @@ def ConvertAssuming_Redshift(source: "Quantity", target: "Quantity") -> "Quantit
     from scipy.optimize import fsolve  # type: ignore
     import math
 
+    def integrand(x):
+        return 1 / math.sqrt(
+            Constants.omega_Matter.value * (1 + x) ** 3 + Constants.omega_Lambda.value
+        )
+
     Constants = ConstantsClass()
     unit = target.unit
     if ~target == ~Quantity("cm"):
         assert ~source == ~Quantity("")
+
         return (Constants.c / Constants.H_0) * integrate.quad(
-            lambda x: 1
-            / math.sqrt(
-                Constants.omega_Matter.value * (1 + x) ** 3
-                + Constants.omega_Lambda.value
-            ),
+            integrand,
             0,
             (source >> "").value,
         )[0] >> (unit)
@@ -283,19 +296,9 @@ def ConvertAssuming_Redshift(source: "Quantity", target: "Quantity") -> "Quantit
         assert ~source == ~Quantity("cm")
 
         def func(Z):
-            return (
-                (Constants.c / Constants.H_0)
-                * integrate.quad(
-                    lambda x: 1
-                    / math.sqrt(
-                        Constants.omega_Matter.value * (1 + x) ** 3
-                        + Constants.omega_Lambda.value
-                    ),
-                    0,
-                    Z,
-                )[0]
-                >> "Gpc"
-            ).value - (source >> "Gpc").value
+            return (Constants.c / Constants.H_0 >> "Gpc").value * integrate.quad(
+                integrand, 0, Z[0]
+            )[0] - (source >> "Gpc").value
 
         return Quantity(fsolve(func, 1)[0], "")
     raise Exception("Cannot convert between different base types")

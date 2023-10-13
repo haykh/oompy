@@ -2,7 +2,7 @@
 
 [![Python package](https://github.com/haykh/oompy/actions/workflows/github-pytest.yml/badge.svg)](https://github.com/haykh/oompy/actions/workflows/github-pytest.yml)
 
-OOMpy is a python package for working with physical units and quantities. Unlike `astropy` it works in gaussian units, supports a multitude of physical dimensions, constants, and conversion between them. 
+OOMpy is a python package for working with physical units and quantities. Unlike `astropy` it works in gaussian units, supports a multitude of physical dimensions, constants, and conversion between them (including vague conversions between incompatible units). 
 
 ## Installation
 
@@ -45,6 +45,11 @@ gold_density = 19.3 * u.g / u.cm**3
 #
 # Output: 1112.6500560536185 g cm^-3
 #
+# equivalently:
+((psr_bfield / c.c)**2).cgs >> "CGS"
+#
+# Output: 1112.6500560536185 g cm^-3
+#
 (psr_bfield / c.c)**2 / gold_density >> ""
 #
 # Output: 57.650261971690085
@@ -60,16 +65,10 @@ sync_omega = gamma_factor**2 * omega_B
 c.hbar * sync_omega >> 'keV'
 #                       ^
 #                       |
-#             understands powers of 10 prefixes 
-#               (from 1e-12 to 1e18)
+#             understands prefixes for the powers of 10
+#               (works from 1e-24 "y*" to 1e24 "Y*")
 #
 # Output: 11.576759893742388 keV
-
-# example #4
-# get the reduced physical type of the quantity (i.e., dimension in base units)
-~(c.hbar * sync_omega)
-#
-# Output: {<Type.MASS: 3>: Fraction(1, 1), <Type.LENGTH: 1>: Fraction(2, 1), <Type.TIME: 2>: Fraction(-2, 1)}
 ```
 
 ```python
@@ -78,6 +77,23 @@ c.hbar * sync_omega >> 'keV'
 (c.R_sun >> 'ly') == c.R_sun # True
 c.M_sun < (c.m_e >> "lb") # False
 c.R_sun >= (c.m_e >> "lb") # Error: incompatible units
+```
+
+```python
+# example #5
+# formatting
+print (f"rest-mass energy of an electron is {c.m_e * c.c**2 >> 'MeV':.2f}")
+#
+# Output: rest-mass energy of an electron is 0.51 MeV
+```
+
+```python
+# example #6
+# get the reduced physical type of the quantity (i.e., dimension in base units)
+# can be utilized for further parsing, integration to other APIs, etc.
+~(c.hbar * sync_omega)
+#
+# Output: {<Type.MASS: 3>: Fraction(1, 1), <Type.LENGTH: 1>: Fraction(2, 1), <Type.TIME: 2>: Fraction(-2, 1)}
 ```
 
 To see all units and/or constants:
@@ -89,7 +105,7 @@ c.all
 Create your own quantities:
 ```python
 from oompy import Quantity
-# example #5
+# example #7
 my_speed = Quantity('25 m sec^-1')
 #                      ^
 #                      |
@@ -105,6 +121,9 @@ elephant_speed = Quantity('km hr^-1')
 #                                           converts lightyear per Gigayear :)
 #
 # Output: 0.9421232705492877 ly Gyr^-1
+#
+# more concise way:
+rabbit_speed2 = 55 * u.mi / u.hr
 ```
 
 ### Vague conversions
@@ -151,7 +170,7 @@ list(assume)
 Testing the code is done in three steps using `black` to check the formatting, `mypy` to check the types and typehints, and `pytest` to run the tests. First install all the dependencies:
 
 ```sh
-pip install black mypy pytest
+pip install -r requirements.txt
 ```
 
 Then run the tests one-by-one:
@@ -162,15 +181,15 @@ mypy oompy
 pytest
 ```
 
-These tests are also run automatically on every commit using GitHub Actions.
+The same tests are also run automatically on every commit using GitHub Actions.
 
 ## To do
 
 - [ ] add more units & constants
   - [x] (added in v1.3.5) knots
-  - [ ] Rsun as measuring unit
-  - [ ] fathom
-  - [ ] nautical miles
+  - [x] (added in v1.4.1) Rsun
+  - [x] (added in v1.4.1) fathom
+  - [x] (added in v1.4.1) nautical miles
 - [x] (added in v1.1.0) comparison of quantities (`==`, `!=`, `>`, `<`, `>=`, `<=`)
 - [x] (added in v1.1.0) conversion with an rshift (`>>`) operator
 - [x] (added in v1.1.0) base unit extraction (with `~`)
@@ -179,6 +198,7 @@ These tests are also run automatically on every commit using GitHub Actions.
 - [ ] add support for Ki, Mi, Gi (2e10, 2e20, 2e30)
 - [x] (added in v1.3.5) distance to redshift vague conversion
 - [x] (added in v1.4.0) work with numpy arrays
+  - [x] (added in v1.4.1) additional tests for numpy arrays 
 - [ ] (TBA in v1.5.0) add formatting and TeX support
 - [ ] add a way to work with scaling relations
-- [ ] add `__format__` for `Quantity` objects
+- [x] (added in v1.4.1) add `__format__` for `Quantity` objects

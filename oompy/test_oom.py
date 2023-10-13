@@ -27,6 +27,12 @@ def test_units():
     assert ((u.sec * c.q_e * u.G / (c.m_e * c.c * 2 * c.pi)) >> "") == 2799248.72930016
     assert (u.sec * c.q_e * u.G / (c.m_e * c.c * 2 * c.pi)) == 2799248.72930016
     assert (c.m_e * c.c**2 >> "lb knot^2").value == 6.820051733957203e-13
+    assert (2 * u.Rsun / u.au * u.rad >> "deg").value == 0.5329042936337913
+    m87_mass = 6.9e9 * u.Msun
+    m87_dist = 16.5 * u.Mpc
+    m87_rg = c.G * m87_mass / c.c**2
+    assert ((2 * m87_rg / m87_dist * u.rad) >> "uarcsec").value == 8.255686423117467
+    assert ((c.c / c.H_0) >> "CGS").value == 1.3704635062974675e28
 
 
 def test_assumptions():
@@ -37,10 +43,19 @@ def test_assumptions():
     )
     assert (Quantity(1, "") >> assume.Redshift >> "pc") == 3396224009.3212013 * u.pc
     assert (5 * u.Gpc >> assume.Redshift >> "") == 1.8018944589315433
-
+    print(f"rest-mass energy of an electron is {c.m_e * c.c**2 >> 'MeV':.2f}")
 
 def test_numpy():
     import numpy as np
+
+    assert np.all(
+        (np.array([2 * u.kg, 3 * u.lb, 4 * u.Msun]) * c.c**2)
+        == [
+            Quantity(1.7975103574736352e17, "J"),
+            Quantity(1.2230055556069862e17, "J"),
+            Quantity(7.148590841051199e47, "J"),
+        ]
+    )
 
     assert np.all(
         (np.array([1, 2, 3]) * u.erg * 2)
@@ -50,3 +65,23 @@ def test_numpy():
             Quantity(597529270656.0, "g m^2 yr^-2"),
         ]
     )
+
+    dists = np.array([1 * u.fathom, 3 * u.Nmi, 5 * u.au])
+    masses = np.array([2, 3, 4]) * u.kg
+    times = np.array([0.25 * u.Gyr, 0.1 * u.sec, 0.0001 * u.month])
+    factors = np.ones(3)
+
+    assert np.all(
+        masses * (dists / times) ** 2 * factors
+        == [
+            Quantity(1.0746683786302514e-31, "J"),
+            Quantity(9260740800.0, "J"),
+            Quantity(3.2361095694635258e19, "J"),
+        ]
+    )
+
+
+def test_repr():
+    assert f"{c.c:.2e}" == "3.00e+08 m sec^-1"
+    assert f"{25.0 * u.Msun * c.c**2 >> 'erg':.2e}" == "4.47e+55 erg"
+    assert f"{(u.Nmi / u.fathom >> ''):.4f}" == "1012.6859"
