@@ -45,6 +45,7 @@ def test_assumptions():
     assert (5 * u.Gpc >> assume.Redshift >> "") == 1.8018944589315433
     print(f"rest-mass energy of an electron is {c.m_e * c.c**2 >> 'MeV':.2f}")
 
+
 def test_numpy():
     import numpy as np
 
