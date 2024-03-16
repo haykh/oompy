@@ -199,6 +199,6 @@ The same tests are also run automatically on every commit using GitHub Actions.
 - [x] (added in v1.3.5) distance to redshift vague conversion
 - [x] (added in v1.4.0) work with numpy arrays
   - [x] (added in v1.4.1) additional tests for numpy arrays 
-- [ ] (TBA in v1.5.0) add formatting and TeX support
+- [ ] (TBA in v2.0.0) add formatting and TeX support
 - [ ] add a way to work with scaling relations
 - [x] (added in v1.4.1) add `__format__` for `Quantity` objects
