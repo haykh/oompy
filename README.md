@@ -201,6 +201,12 @@ mypy oompy
 pytest
 ```
 
+Build the new version of the package using:
+
+```sh
+python -m build --sdist --outdir dist .
+```
+
 The same tests are also run automatically on every commit using GitHub Actions.
 
 ## To do
