@@ -93,7 +93,7 @@ class Quantity:
             units_.append(u)
         units = units_
         pows = [
-            (f"{{}}^{{{f.split(" ^ ")[1]}}}" if len(f.split("^")) > 1 else "")
+            (f"{{}}^{{{f.split("^")[1]}}}" if len(f.split("^")) > 1 else "")
             for f in self.unit.split(" ")
         ]
         units = [
