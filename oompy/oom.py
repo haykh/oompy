@@ -1,6 +1,9 @@
 from enum import Enum
 from fractions import Fraction
 from typing import Union, Dict
+import matplotlib.units as units
+import sympy as sp
+import numpy as np
 
 from .utils import Stringize, ParseUnit, StripCoeff, JoinUnits
 from .constants import ConstantValues
@@ -12,11 +15,12 @@ from .units import (
     RaiseUnitsToPower,
     Powers,
     BaseUnits,
+    LatexUnitMapping,
     UnitEquivalencies,
 )
 
 
-ValidQuantity = Union["Quantity", tuple, int, float]
+ValidQuantity = Union["Quantity", tuple, int, float, np.ndarray]
 
 
 class Quantity:
@@ -68,6 +72,44 @@ class Quantity:
 
     def __repr__(self) -> str:
         return f"{self.value} {self.unit}"
+
+    def value_latex(self) -> str:
+        if self.value < 0.001 or self.value > 9999:
+            nval = f"{self.value:.5e}".split("e")
+        else:
+            nval = f"{self.value:.5f}".split("e")
+        return nval[0] + (
+            f"\\cdot 10^{{{int(nval[1])}}}"
+            if len(nval) > 1 and int(nval[1]) != 0
+            else ""
+        )
+
+    def unit_latex(self) -> str:
+        units = [f.split("^")[0] for f in self.unit.split(" ")]
+        units_ = []
+        for u in units:
+            for k, v in LatexUnitMapping.items():
+                u = u.replace(k, v)
+            units_.append(u)
+        units = units_
+        pows = [
+            (f"{{}}^{{{f.split(" ^ ")[1]}}}" if len(f.split("^")) > 1 else "")
+            for f in self.unit.split(" ")
+        ]
+        units = [
+            u if "_" in u else f"\\text{{{u}}}" + p
+            for u, p in zip(units, pows)
+            if u != ""
+        ]
+        return "~".join(units)
+
+    def _repr_latex_(self) -> str:
+        nval = self.value_latex()
+        units = self.unit_latex()
+        if units != "":
+            return f"${nval}~[" + units + "]$"
+        else:
+            return f"${nval}$"
 
     def __str__(self) -> str:
         return self.__repr__()
@@ -176,6 +218,8 @@ class Quantity:
             return self * Quantity(*other)
         elif isinstance(other, (int, float)):
             return Quantity(self.value * other, self.unit)
+        elif isinstance(other, np.ndarray):
+            return other * self
         else:
             raise Exception("Invalid arguments for Quantity.__mul__")
 
@@ -190,6 +234,8 @@ class Quantity:
             return self ** Quantity(*other)
         elif isinstance(other, (int, float)):
             return Quantity(self.value**other, RaiseUnitsToPower(self.unit, other))
+        else:
+            raise Exception("Invalid arguments for Quantity.__pow__")
 
     def __truediv__(self, other: ValidQuantity) -> "Quantity":
         return self * (Quantity(other) ** (-1))
@@ -199,6 +245,28 @@ class Quantity:
 
     def __float__(self) -> float:
         return self.value
+
+
+class MplUnitConverter(units.ConversionInterface):
+    @staticmethod
+    def convert(value, unit, axis):
+        if isinstance(value, Quantity):
+            return value.value
+        elif isinstance(value, list):
+            return [(v >> value[0].unit).value for v in value]
+        elif isinstance(value, np.ndarray):
+            return np.array([(v >> value[0].unit).value for v in value])
+
+    @staticmethod
+    def axisinfo(unit, axis):
+        return units.AxisInfo(label=str(unit))
+
+    @staticmethod
+    def default_units(x, axis):
+        if isinstance(x, Quantity):
+            return f"${x.unit_latex()}$"
+        elif isinstance(x, list) or isinstance(x, np.ndarray):
+            return f"${x[0].unit_latex()}$"
 
 
 class UnitsClass:

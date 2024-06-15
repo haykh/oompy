@@ -165,6 +165,26 @@ To list all the available assumptions:
 list(assume)
 ```
 
+### Matplotlib and numpy support
+
+One can combine dimensional quantities into arrays or lists and plot them using matplotlib:
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# call this function to enable matplotlib support
+from oompy import matplotlib_support
+matplotlib_support()
+
+ms = np.logspace(0, 2, 2) * u.Msun
+rs = [10 * u.cm, 2.5 * u.ft]
+#            ^           ^
+#       can have different units
+
+plt.plot(rs, ms)
+```
+![pic](demo/mpl.png)
+
 ## For developers
 
 Testing the code is done in three steps using `black` to check the formatting, `mypy` to check the types and typehints, and `pytest` to run the tests. First install all the dependencies:
@@ -198,7 +218,8 @@ The same tests are also run automatically on every commit using GitHub Actions.
 - [ ] add support for Ki, Mi, Gi (2e10, 2e20, 2e30)
 - [x] (added in v1.3.5) distance to redshift vague conversion
 - [x] (added in v1.4.0) work with numpy arrays
-  - [x] (added in v1.4.1) additional tests for numpy arrays 
-- [ ] (TBA in v2.0.0) add formatting and TeX support
+  - [x] (added in v1.4.1) additional tests for numpy arrays
+  - [x] (added in v2.0.0) numpy array multiplication works both ways
+- [x] (added in v2.0.0) add formatting and TeX support
 - [ ] add a way to work with scaling relations
 - [x] (added in v1.4.1) add `__format__` for `Quantity` objects

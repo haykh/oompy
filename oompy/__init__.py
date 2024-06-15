@@ -1,8 +1,14 @@
-__version__ = "1.5.0"
+__version__ = "2.0.0"
 
-from .oom import UnitsClass, ConstantsClass, Quantity, Assumptions
+from .oom import UnitsClass, ConstantsClass, Quantity, Assumptions, MplUnitConverter
 
 Units = UnitsClass()
 Constants = ConstantsClass()
 
-__all__ = ["Quantity", "Units", "Constants", "Assumptions", "Utils"]
+__all__ = ["Quantity", "Units", "Constants", "Assumptions", "Utils", "MplUnitConverter"]
+
+
+def matplotlib_support():
+    import matplotlib.units as units
+
+    units.registry[Quantity] = MplUnitConverter()

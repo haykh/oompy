@@ -99,8 +99,13 @@ UnitEquivalencies = {
     "W": (1e7, "erg sec^-1"),
     # magnetic field
     "G": (1.0, "erg^1/2 cm^-3/2"),
+    "T": (1e4, "G"),
     # charge
     "statC": (1.0, "cm^3/2 g^1/2 sec^-1"),
+    "qe": (4.80320427e-10, "statC"),
+    "C": (2997924580.0, "statC"),
+    # current
+    "A": (1.0, "C sec^-1"),
     # information
     "B": (8, "bit"),
     # frequency
@@ -109,6 +114,14 @@ UnitEquivalencies = {
     "deg": (0.017453292519943295, "rad"),
     "arcsec": (4.84813681109536e-06, "rad"),
     "arcmin": (0.0002908882086657216, "rad"),
+}
+
+LatexUnitMapping = {
+    "Msun": "M_\\bigodot",
+    "Rsun": "R_\\bigodot",
+    "me": "m_e",
+    "au": "AU",
+    "sec": "s",
 }
 
 
