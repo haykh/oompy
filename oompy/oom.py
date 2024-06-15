@@ -249,7 +249,7 @@ class Quantity:
 
 class MplUnitConverter(units.ConversionInterface):
     @staticmethod
-    def convert(value, unit, axis):
+    def convert(value, _, __):
         if isinstance(value, Quantity):
             return value.value
         elif isinstance(value, list):
@@ -258,11 +258,11 @@ class MplUnitConverter(units.ConversionInterface):
             return np.array([(v >> value[0].unit).value for v in value])
 
     @staticmethod
-    def axisinfo(unit, axis):
+    def axisinfo(unit, _):
         return units.AxisInfo(label=str(unit))
 
     @staticmethod
-    def default_units(x, axis):
+    def default_units(x, _):
         if isinstance(x, Quantity):
             return f"${x.unit_latex()}$"
         elif isinstance(x, list) or isinstance(x, np.ndarray):
