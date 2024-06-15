@@ -216,6 +216,7 @@ The same tests are also run automatically on every commit using GitHub Actions.
   - [x] (added in v1.4.1) Rsun
   - [x] (added in v1.4.1) fathom
   - [x] (added in v1.4.1) nautical miles
+  - [x] (added in v2.0.0) Amps, Coulombs, Teslas (for conversion only)
 - [x] (added in v1.1.0) comparison of quantities (`==`, `!=`, `>`, `<`, `>=`, `<=`)
 - [x] (added in v1.1.0) conversion with an rshift (`>>`) operator
 - [x] (added in v1.1.0) base unit extraction (with `~`)
@@ -226,6 +227,7 @@ The same tests are also run automatically on every commit using GitHub Actions.
 - [x] (added in v1.4.0) work with numpy arrays
   - [x] (added in v1.4.1) additional tests for numpy arrays
   - [x] (added in v2.0.0) numpy array multiplication works both ways
+- [x] (added in v2.0.0) matplotlib support
 - [x] (added in v2.0.0) add formatting and TeX support
 - [ ] add a way to work with scaling relations
 - [x] (added in v1.4.1) add `__format__` for `Quantity` objects
