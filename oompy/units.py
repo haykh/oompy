@@ -1,10 +1,11 @@
-from enum import Enum
-from fractions import Fraction
-from typing import Union, Dict, Tuple
+from .types import Dim, TypeDim, TypeRational, TypeNumeric, TypeRawQuantity, TypeUnit
+from .utils import add_unit, raw_quantity_to_str, str_quantity_to_raw, str_unit_to_dict
 
-from .utils import addOrAppend, Stringize, ParseUnit, StripCoeff
+# from typing import Union, Dict, Tuple
 
-Powers = {
+# from .utils import addOrAppend, Stringize, ParseUnit, StripCoeff
+
+Powers: dict[str, float] = {
     "y": 1e-24,
     "z": 1e-21,
     "a": 1e-18,
@@ -26,43 +27,27 @@ Powers = {
 }
 
 
-class Type(Enum):
-    DIMENSIONLESS = 0
-    LENGTH = 1
-    TIME = 2
-    MASS = 3
-    B_FIELD = 4
-    CHARGE = 5
-    SPEED = 6
-    ENERGY = 7
-    FORCE = 8
-    ACCELERATION = 9
-    INFORMATION = 10
-    TEMPERATURE = 11
-    ANGLE = 12
-
-
-CGSUnits = {
-    Type.DIMENSIONLESS: "",
-    Type.LENGTH: "cm",
-    Type.TIME: "sec",
-    Type.MASS: "g",
-    Type.TEMPERATURE: "K",
-    Type.INFORMATION: "bit",
-    Type.ANGLE: "rad",
+CGSUnits: dict[Dim, str] = {
+    Dim.NONE: "",
+    Dim.LENGTH: "cm",
+    Dim.TIME: "sec",
+    Dim.MASS: "g",
+    Dim.TEMPERATURE: "K",
+    Dim.INFORMATION: "bit",
+    Dim.ANGLE: "rad",
 }
 
-BaseUnits = {
-    Type.DIMENSIONLESS: "",
-    Type.LENGTH: "m",
-    Type.TIME: "sec",
-    Type.MASS: "g",
-    Type.TEMPERATURE: "K",
-    Type.INFORMATION: "bit",
-    Type.ANGLE: "rad",
+BaseUnits: dict[Dim, str] = {
+    Dim.NONE: "",
+    Dim.LENGTH: "m",
+    Dim.TIME: "sec",
+    Dim.MASS: "g",
+    Dim.TEMPERATURE: "K",
+    Dim.INFORMATION: "bit",
+    Dim.ANGLE: "rad",
 }
 
-UnitEquivalencies = {
+UnitEquivalencies: dict[str, tuple[float, str]] = {
     # length
     "ft": (0.3048, "m"),
     "in": (0.0254, "m"),
@@ -116,7 +101,7 @@ UnitEquivalencies = {
     "arcmin": (0.0002908882086657216, "rad"),
 }
 
-LatexUnitMapping = {
+LatexUnitMapping: dict[str, str] = {
     "Msun": "M_\\bigodot",
     "Rsun": "R_\\bigodot",
     "me": "m_e",
@@ -125,70 +110,171 @@ LatexUnitMapping = {
 }
 
 
-def ReduceUnitToBase(unit: str = "") -> str:
-    coeff, factorized = ParseUnit(unit)
-    newunits = {}  # type: dict[str, Fraction]
-    for u, p in factorized.items():
-        if u in BaseUnits.values():
-            addOrAppend(newunits, u, p)
-        elif u in UnitEquivalencies.keys():
-            eq_c, eq_u = UnitEquivalencies[u]
-            eq_str = Stringize((eq_c, eq_u))
-            eq_base = ReduceUnitToBase(eq_str)
-            nc, nu = ParseUnit(eq_base)
-            for u2, p2 in nu.items():
-                addOrAppend(newunits, u2, p * p2)
-            coeff *= nc**p
-        elif u[1:] in BaseUnits.values() and u[0] in Powers.keys() and u[1:] != "":
-            addOrAppend(newunits, u[1:], p)
-            coeff *= Powers[u[0]] ** p
+def unit_str_convert_from_to(unit_to: str, unit_from: str) -> TypeNumeric:
+    """Converts a unit from one to another using either the UnitEquivalencies dictionary, or the powers of 10 prefixes.
+
+    Parameters
+    ----------
+    unit_to : str
+        The unit to convert to, e.g. "m".
+
+    unit_from : str
+        The unit to convert from, e.g. "km".
+
+    Returns
+    -------
+    TypeNumeric
+        The conversion factor from the unit_from to the unit_to. E.g., 1000.0 for "km" to "m".
+
+    Raises
+    ------
+    AssertionError
+        When units do not match.
+    """
+    base_unit_to = unit_str_to_base(unit_to)
+    base_unit_from = unit_str_to_base(unit_from)
+    assert (
+        base_unit_to[1] == base_unit_from[1]
+    ), "Units do not have the same base dimension"
+    return base_unit_to[0] / base_unit_from[0]
+
+
+def raw_quantity_to_base(quant: TypeRawQuantity) -> TypeRawQuantity:
+    """Converts a raw quantity (coefficient and unit dictionary) to its base unit representation.
+
+    Parameters
+    ----------
+    quant : TypeRawQuantity
+        The raw quantity to convert, e.g. (1.0, {"kg": 2, "mm": Fraction(-1, 2)}).
+
+    Returns
+    -------
+    TypeRawQuantity
+        A tuple containing the coefficient as a float and a dictionary of base units with their powers.
+        For example, (3.16e7, {"g": 2, "m": Fraction(-1, 2)}).
+    """
+    value: TypeNumeric = quant[0]
+    unit_dict: TypeUnit = quant[1]
+
+    # check if all base units
+    if all(unit in BaseUnits.values() for unit in unit_dict):
+        return quant
+
+    newvalue: TypeNumeric = value
+    newunit_dict: TypeUnit = {}
+    for unit, power in unit_dict.items():
+        if unit in BaseUnits.values():
+            add_unit(newunit_dict, unit, power)
+        elif unit in UnitEquivalencies.keys():
+            # unit conversion necessary
+            eq_val, eq_unit_str = UnitEquivalencies[unit]
+            eq_unit_dict = str_unit_to_dict(eq_unit_str)
+            for eq_unit, eq_power in eq_unit_dict.items():
+                add_unit(newunit_dict, eq_unit, power * eq_power)
+            newvalue *= eq_val**power
         elif (
-            u[1:] in UnitEquivalencies.keys() and u[0] in Powers.keys() and u[1:] != ""
-        ):
-            eq_c, eq_u = UnitEquivalencies[u[1:]]
-            eq_str = Stringize((eq_c, eq_u))
-            eq_base = ReduceUnitToBase(eq_str)
-            nc, nu = ParseUnit(eq_base)
-            for u2, p2 in nu.items():
-                addOrAppend(newunits, u2, p * p2)
-            coeff *= nc**p * Powers[u[0]] ** p
-        else:
-            raise Exception(f"Invalid unit: {u}")
-    return Stringize((coeff, newunits))
+            unit[1:] in BaseUnits.values() or unit[1:] in UnitEquivalencies.keys()
+        ) and (unit[0] in Powers):
+            # power-of-10 prefix
+            prefix = Powers[unit[0]]
+            add_unit(newunit_dict, unit[1:], power)
+            newvalue *= prefix**power
+
+    return raw_quantity_to_base((newvalue, newunit_dict))
 
 
-def GetBaseType(unit: str = "") -> Dict["Type", "Fraction"]:
-    _, factorized = ParseUnit(ReduceUnitToBase(unit))
-    newf = {}
-    for f in factorized.keys():
+def unit_str_to_base(unit_str: str) -> TypeRawQuantity:
+    """Converts a unit string to its base unit representation.
+
+    Parameters
+    ----------
+    unit_str : str
+        The unit string to convert, e.g. "kg^2 mm^-1/2".
+
+    Returns
+    -------
+    TypeRawQuantity
+        A tuple containing the coefficient as a float and a dictionary of base units with their powers.
+        For example, (3.16e7, {"g": 2, "m": Fraction(-1, 2)}).
+    """
+    return raw_quantity_to_base(str_quantity_to_raw(unit_str))
+
+
+def unit_dict_to_dim_dict(unit_dict: TypeUnit) -> TypeDim:
+    """Converts a unit dictionary to a dictionary of base types with their powers.
+
+    Parameters
+    ----------
+    unit_dict : TypeUnit
+        The unit dictionary to convert, e.g. {"kg": 2, "mm": Fraction(-1, 2)}.
+
+    Returns
+    -------
+    TypeDim
+        A dictionary where keys are Dim enums and values are their powers as TypeRational.
+        For example, {Dim.MASS: 2, Dim.LENGTH: Fraction(-1, 2)}.
+    """
+    base_unit_dict: TypeUnit = raw_quantity_to_base((1.0, unit_dict))[1]
+    newf: dict[Dim, TypeRational] = {}
+    for f, power in base_unit_dict.items():
         for k, v in BaseUnits.items():
             if f == v:
-                newf[k] = factorized[f]
+                newf[k] = power
                 break
-    assert len(newf) == len(factorized), "Wrong base type inferrence"
+    assert len(newf) == len(base_unit_dict), "Wrong base type inferrence"
     if len(newf) > 1:
         for f2 in newf.keys():
-            if f2 == Type.DIMENSIONLESS:
-                newf.pop(f2)
+            if f2 == Dim.NONE:
+                del newf[f2]
                 break
     return newf
 
 
-def RaiseUnitsToPower(unit: str, pwr: Union[int, float, Fraction]) -> str:
-    pwr = Fraction(pwr).limit_denominator(1000000)
-    c, u = ParseUnit(unit)
-    return Stringize(
-        (c**pwr, Stringize({b: Fraction(Fraction(pwr) * p) for b, p in u.items()}))
-    )
+def unit_dict_to_cgs_dict(unit_dict: TypeUnit) -> TypeRawQuantity:
+    """Converts a unit dictionary to a CGS unit dictionary.
+
+    Parameters
+    ----------
+    unit_dict : TypeUnit
+        The unit dictionary to convert, e.g. {"kg": 2, "mm": Fraction(-1, 2)}.
+
+    Returns
+    -------
+    TypeRawQuantity
+        A tuple containing the coefficient as a float and a dictionary of CGS units with their powers.
+        For example, (3.16e6, {"g": 2, "cm": Fraction(-1, 2)}).
+    """
+    base_quant = raw_quantity_to_base((1.0, unit_dict))
+    base_value, base_unit_dict = base_quant
+    cgs_value = base_value
+    cgs_unit_dict: TypeUnit = {}
+    for unit, pow in base_unit_dict.items():
+        assert unit in BaseUnits.values(), f"Unit {unit} not in base units"
+        cgs_unit: str | None = None
+        for d, u in BaseUnits.items():
+            if u == unit:
+                cgs_unit = CGSUnits[d]
+                break
+        assert cgs_unit is not None, "corresponding CGS unit was not found"
+        conversion = unit_str_convert_from_to(unit, cgs_unit)
+        cgs_value *= conversion**pow
+        cgs_unit_dict[cgs_unit] = pow
+    return (cgs_value, cgs_unit_dict)
 
 
-def ConvertUnit(src: str, dst: str) -> Tuple[float, str]:
-    assert GetBaseType(src) == GetBaseType(
-        dst
-    ), "Cannot convert between different base types"
-    _, dst_u = StripCoeff(dst)
-    red_src = ReduceUnitToBase(src)
-    red_dst = ReduceUnitToBase(dst)
-    c1, _ = StripCoeff(red_src)
-    c2, _ = StripCoeff(red_dst)
-    return c1 / c2, dst_u
+def unit_str_to_dim_dict(unit_str: str) -> TypeDim:
+    """Converts a unit string to a dictionary of base types with their powers.
+
+    Parameters
+    ----------
+    unit_str : str
+        The unit string to convert, e.g. "kg^2 mm^-1/2".
+
+    Returns
+    -------
+    TypeDim
+        A dictionary where keys are Dim enums and values are their powers as TypeRational.
+        For example, {Dim.MASS: 2, Dim.LENGTH: Fraction(-1, 2)}.
+    """
+    base_quant = unit_str_to_base(unit_str)
+    return unit_dict_to_dim_dict(base_quant[1])
